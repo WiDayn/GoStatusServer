@@ -3,47 +3,64 @@ package controller
 import (
 	"GoStatusServer/logger"
 	"GoStatusServer/utils"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
+	"strconv"
+	"time"
 )
 
 type QueryRequest struct {
-	ClientsId []string
+	ClientsId   string `json:"ClientId"`
+	DisplayName string `json:"DisplayName"`
+	CountryCode string `json:"CountryCode"`
 }
 
 type QueryFeedback struct {
 	ClientId                string
+	DisplayName             string
+	CountryCode             string
 	CPUAvg                  float64
-	MemAll                  uint64
-	MenFree                 uint64
-	MenUsed                 uint64
+	MemAll                  string
+	MenFree                 string
+	MenUsed                 string
 	MemUsedPercent          float64
-	TotalDownStreamDataSize uint64
-	TotalUpStreamDataSize   uint64
-	NowDownStreamDataSize   int
-	NowUpStreamDataSize     int
-	DiskTotal               uint64
-	DiskUsed                uint64
+	TotalDownStreamDataSize string
+	TotalUpStreamDataSize   string
+	NowDownStreamDataSize   string
+	NowUpStreamDataSize     string
+	DiskTotal               string
+	DiskUsed                string
 	DiskPercent             uint64
+	Online                  bool
 }
 
 func QueryFeedbackDto(client UpdateRequest) QueryFeedback {
 	return QueryFeedback{
 		ClientId:                client.ClientId,
-		TotalDownStreamDataSize: client.DynamicInformation.TotalDownStreamDataSize,
-		TotalUpStreamDataSize:   client.DynamicInformation.TotalUpStreamDataSize,
-		NowUpStreamDataSize:     client.DynamicInformation.NowUpStreamDataSize,
-		NowDownStreamDataSize:   client.DynamicInformation.NowDownStreamDataSize,
-		CPUAvg:                  client.DynamicInformation.CPUAvg,
-		MemAll:                  client.DynamicInformation.MemAll,
-		MenFree:                 client.DynamicInformation.MenFree,
-		MenUsed:                 client.DynamicInformation.MenUsed,
-		MemUsedPercent:          client.DynamicInformation.MemUsedPercent,
-		DiskTotal:               client.DynamicInformation.DiskInformation.Total,
-		DiskUsed:                client.DynamicInformation.DiskInformation.Used,
+		DisplayName:             client.DisplayName,
+		CountryCode:             client.CountryCode,
+		TotalDownStreamDataSize: strconv.Itoa(int(client.DynamicInformation.TotalDownStreamDataSize/1024/1024/1024)) + " GB",
+		TotalUpStreamDataSize:   strconv.Itoa(int(client.DynamicInformation.TotalUpStreamDataSize/1024/1024/1024)) + " GB",
+		NowUpStreamDataSize:     strconv.Itoa(client.DynamicInformation.NowUpStreamDataSize) + " Kbp/s",
+		NowDownStreamDataSize:   strconv.Itoa(client.DynamicInformation.NowDownStreamDataSize) + " Kbp/s",
+		CPUAvg:                  ParseFloat(client.DynamicInformation.CPUAvg),
+		MemAll:                  strconv.Itoa(int(client.DynamicInformation.MemAll/1024/1024)) + " MB",
+		MenFree:                 strconv.Itoa(int(client.DynamicInformation.MenFree/1024/1024)) + " MB",
+		MenUsed:                 strconv.Itoa(int(client.DynamicInformation.MenUsed/1024/1024)) + " MB",
+		MemUsedPercent:          ParseFloat(client.DynamicInformation.MemUsedPercent),
+		DiskTotal:               strconv.Itoa(int(client.DynamicInformation.DiskInformation.Total)) + " GB",
+		DiskUsed:                strconv.Itoa(int(client.DynamicInformation.DiskInformation.Used)) + " GB",
 		DiskPercent:             client.DynamicInformation.DiskInformation.Percent,
+		Online:                  client.Online,
 	}
+}
+
+func ParseFloat(num float64) float64 {
+	num, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", num), 64)
+	return num
 }
 
 func Query(c *gin.Context) {
@@ -56,30 +73,44 @@ func Query(c *gin.Context) {
 		err := ws.Close()
 		if err != nil {
 			logger.Warning("Close websocket error", err)
-			panic(err)
+			return
 		}
 	}(ws) //返回前关闭
-	var queryRequest QueryRequest
-	if err := ws.ReadJSON(&queryRequest); err != nil {
-		logger.Error("Read updateRequest json error", nil)
-		return
+	var queryRequest []QueryRequest
+	err = ws.ReadJSON(&queryRequest)
+	for err != nil {
+		// logger.Error("Read updateRequest json error", nil)
+		err = ws.ReadJSON(&queryRequest)
 	}
 	for {
 		var queryFeedback []QueryFeedback
-		for _, clientId := range queryRequest.ClientsId {
-			res, _ := utils.Redisdb.Keys(clientId).Result()
-			var client UpdateRequest
-			err := json.Unmarshal([]byte(res[0]), &client)
-			if err != nil {
-				logger.Error("Read redis json error", nil)
-				return
+		for _, query := range queryRequest {
+			if res, err := utils.Redisdb.Get(query.ClientsId).Result(); err != redis.Nil {
+				var client UpdateRequest
+				err := json.Unmarshal([]byte(res), &client)
+				if err != nil {
+					logger.Error("Read redis json error", nil)
+					return
+				}
+				if client.UpdateTime.After(time.Now().Add(-time.Second * 15)) {
+					client.Online = true
+				} else {
+					client.Online = false
+				}
+				queryFeedback = append(queryFeedback, QueryFeedbackDto(client))
 			}
-			queryFeedback = append(queryFeedback, QueryFeedbackDto(client))
+
 		}
 		err := ws.WriteJSON(queryFeedback)
 		if err != nil {
 			logger.Error("Write updateRequest json error", nil)
+			err := ws.Close()
+			if err != nil {
+				logger.Warning("Close websocket error", err)
+				return
+			}
 			return
 		}
+		time.Sleep(time.Second * 1)
 	}
 }

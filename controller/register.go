@@ -8,9 +8,9 @@ import (
 )
 
 type RegisterRequest struct {
-	ClientId    string
-	DisplayName string
-	BasicInf    BasicInformation
+	ClientId         string
+	DisplayName      string
+	BasicInformation BasicInformation
 }
 
 type BasicInformation struct {
@@ -49,30 +49,30 @@ func Register(c *gin.Context) {
 	var client model.Client
 	client.ClientId = registerRequest.ClientId
 	client.DisplayName = registerRequest.DisplayName
-	for _, cpu := range registerRequest.BasicInf.CPUs {
+	for _, cpu := range registerRequest.BasicInformation.CPUs {
 		client.CPU = append(client.CPU, model.CPU{
 			ClientId: registerRequest.ClientId,
 			CPUName:  cpu.CPUName,
 			CPUCores: cpu.CPUCores,
 		})
 	}
-	client.IP = registerRequest.BasicInf.IP
-	client.OS = registerRequest.BasicInf.OS
-	client.CPULogicalCnt = registerRequest.BasicInf.CPULogicalCnt
-	client.CPUPhysicalCnt = registerRequest.BasicInf.CPUPhysicalCnt
-	client.Hostname = registerRequest.BasicInf.Hostname
-	client.Country = registerRequest.BasicInf.Country
-	client.As = registerRequest.BasicInf.As
-	client.CountryCode = registerRequest.BasicInf.CountryCode
-	client.Region = registerRequest.BasicInf.Region
-	client.RegionName = registerRequest.BasicInf.RegionName
-	client.City = registerRequest.BasicInf.City
-	client.Zip = registerRequest.BasicInf.Zip
-	client.Lat = registerRequest.BasicInf.Lat
-	client.Lon = registerRequest.BasicInf.Lon
-	client.Timezone = registerRequest.BasicInf.Timezone
-	client.Isp = registerRequest.BasicInf.Isp
-	client.Org = registerRequest.BasicInf.Org
+	client.IP = registerRequest.BasicInformation.IP
+	client.OS = registerRequest.BasicInformation.OS
+	client.CPULogicalCnt = registerRequest.BasicInformation.CPULogicalCnt
+	client.CPUPhysicalCnt = registerRequest.BasicInformation.CPUPhysicalCnt
+	client.Hostname = registerRequest.BasicInformation.Hostname
+	client.Country = registerRequest.BasicInformation.Country
+	client.As = registerRequest.BasicInformation.As
+	client.CountryCode = registerRequest.BasicInformation.CountryCode
+	client.Region = registerRequest.BasicInformation.Region
+	client.RegionName = registerRequest.BasicInformation.RegionName
+	client.City = registerRequest.BasicInformation.City
+	client.Zip = registerRequest.BasicInformation.Zip
+	client.Lat = registerRequest.BasicInformation.Lat
+	client.Lon = registerRequest.BasicInformation.Lon
+	client.Timezone = registerRequest.BasicInformation.Timezone
+	client.Isp = registerRequest.BasicInformation.Isp
+	client.Org = registerRequest.BasicInformation.Org
 
 	utils.GormDb.Session(&gorm.Session{FullSaveAssociations: true}).FirstOrCreate(&model.Client{ClientId: registerRequest.ClientId}).Updates(&client)
 }

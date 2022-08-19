@@ -12,7 +12,11 @@ import (
 
 type UpdateRequest struct {
 	ClientId           string
+	DisplayName        string
+	CountryCode        string
 	DynamicInformation DynamicInformation
+	UpdateTime         time.Time
+	Online             bool
 }
 
 type DynamicInformation struct {
@@ -64,7 +68,6 @@ func Update(c *gin.Context) {
 		}
 		js, _ := json.Marshal(updateRequest)
 
-		utils.Redisdb.Set(updateRequest.ClientId, js, time.Minute*10)
-		println(updateRequest.DynamicInformation.CPUAvg)
+		utils.Redisdb.Set(updateRequest.ClientId, js, time.Hour*20480)
 	}
 }
