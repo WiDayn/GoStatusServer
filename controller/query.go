@@ -2,6 +2,7 @@ package controller
 
 import (
 	"GoStatusServer/logger"
+	"GoStatusServer/model"
 	"GoStatusServer/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -12,33 +13,8 @@ import (
 	"time"
 )
 
-type QueryRequest struct {
-	ClientsId   string `json:"ClientId"`
-	DisplayName string `json:"DisplayName"`
-	CountryCode string `json:"CountryCode"`
-}
-
-type QueryFeedback struct {
-	ClientId                string
-	DisplayName             string
-	CountryCode             string
-	CPUAvg                  float64
-	MemAll                  string
-	MenFree                 string
-	MenUsed                 string
-	MemUsedPercent          float64
-	TotalDownStreamDataSize string
-	TotalUpStreamDataSize   string
-	NowDownStreamDataSize   string
-	NowUpStreamDataSize     string
-	DiskTotal               string
-	DiskUsed                string
-	DiskPercent             uint64
-	Online                  bool
-}
-
-func QueryFeedbackDto(client UpdateRequest) QueryFeedback {
-	return QueryFeedback{
+func QueryFeedbackDto(client model.UpdateRequest) model.QueryFeedback {
+	return model.QueryFeedback{
 		ClientId:                client.ClientId,
 		DisplayName:             client.DisplayName,
 		CountryCode:             client.CountryCode,
@@ -55,6 +31,9 @@ func QueryFeedbackDto(client UpdateRequest) QueryFeedback {
 		DiskUsed:                strconv.Itoa(int(client.DynamicInformation.DiskInformation.Used)) + " GB",
 		DiskPercent:             client.DynamicInformation.DiskInformation.Percent,
 		Online:                  client.Online,
+		CT:                      client.DynamicInformation.CT,
+		CU:                      client.DynamicInformation.CU,
+		CM:                      client.DynamicInformation.CM,
 	}
 }
 
@@ -76,17 +55,17 @@ func Query(c *gin.Context) {
 			return
 		}
 	}(ws) //返回前关闭
-	var queryRequest []QueryRequest
+	var queryRequest []model.QueryRequest
 	err = ws.ReadJSON(&queryRequest)
 	for err != nil {
 		// logger.Error("Read updateRequest json error", nil)
 		err = ws.ReadJSON(&queryRequest)
 	}
 	for {
-		var queryFeedback []QueryFeedback
+		var queryFeedback []model.QueryFeedback
 		for _, query := range queryRequest {
 			if res, err := utils.Redisdb.Get(query.ClientsId).Result(); err != redis.Nil {
-				var client UpdateRequest
+				var client model.UpdateRequest
 				err := json.Unmarshal([]byte(res), &client)
 				if err != nil {
 					logger.Error("Read redis json error", nil)

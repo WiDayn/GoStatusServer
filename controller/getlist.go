@@ -7,16 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type GetListFeedback struct {
-	ClientId    string
-	DisplayName string
-	CountryCode string `gorm:"varchar(40)"`
-}
-
-func GetListDot(clients []model.Client) []GetListFeedback {
-	var getList []GetListFeedback
+func GetListDot(clients []model.Client) []model.GetListFeedback {
+	var getList []model.GetListFeedback
 	for _, client := range clients {
-		getList = append(getList, GetListFeedback{
+		getList = append(getList, model.GetListFeedback{
 			ClientId:    client.ClientId,
 			DisplayName: client.DisplayName,
 			CountryCode: client.CountryCode,

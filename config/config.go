@@ -12,6 +12,7 @@ type config struct {
 	Port        int
 	SQLServer   SQLServer
 	RedisServer RedisServer
+	TelegramBot TelegramBot
 }
 
 type SQLServer struct {
@@ -28,6 +29,12 @@ type RedisServer struct {
 	Address  string
 	Password string
 	DB       int
+}
+
+type TelegramBot struct {
+	Enable   bool
+	BotToken string
+	NotifyID int64 `comment:"支持user, group, chanel, 以逗号隔开"`
 }
 
 var Config config

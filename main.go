@@ -3,9 +3,11 @@ package main
 import (
 	"GoStatusServer/config"
 	"GoStatusServer/controller"
+	"GoStatusServer/controller/telegram"
 	"GoStatusServer/logger"
 	"GoStatusServer/model"
 	"GoStatusServer/utils"
+	"GoStatusServer/watcher"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -32,6 +34,9 @@ func main() {
 	utils.SQLInit()
 	utils.RedisInit()
 	model.ClientInit()
+	utils.InitTelegramBot()
+	telegram.RegisterController()
+	go watcher.DefaultOnlineStatusWatcher.Run()
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 	r.POST("/register", controller.Register)
