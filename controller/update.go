@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"GoStatusServer/config"
 	"GoStatusServer/logger"
 	"GoStatusServer/model"
 	"GoStatusServer/utils"
@@ -34,6 +35,16 @@ func Update(c *gin.Context) {
 			panic(err)
 		}
 	}(ws)
+
+	var SecretKey string
+	if err := ws.ReadJSON(&SecretKey); err != nil {
+		return
+	}
+
+	if SecretKey != config.Config.SecretKey {
+		return
+	}
+
 	for {
 		var updateRequest model.UpdateRequest
 		err := ws.ReadJSON(&updateRequest)
@@ -44,12 +55,7 @@ func Update(c *gin.Context) {
 
 		if lastTimeClearPing.Before(time.Now().Add(-time.Hour * 24)) {
 			// 清空redis，重新记录
-			marshal, _ := json.Marshal(model.PingRecords{
-				CT: model.PingRecord{PacketsReceive: 0, PacketsSent: 0},
-				CU: model.PingRecord{PacketsReceive: 0, PacketsSent: 0},
-				CM: model.PingRecord{PacketsReceive: 0, PacketsSent: 0},
-			})
-			utils.Redisdb.Set(updateRequest.ClientId+"/PingRecords", marshal, time.Hour*20480)
+			utils.Redisdb.Set(updateRequest.ClientId+"/PingRecords", "{}", time.Hour*20480)
 			lastTimeClearPing = time.Now()
 		}
 

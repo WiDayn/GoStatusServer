@@ -3,16 +3,19 @@ package config
 import (
 	"fmt"
 	"github.com/go-ini/ini"
+	uuid "github.com/satori/go.uuid"
 	"log"
 	"os"
 )
 
 type config struct {
 	Debug       bool
+	SecretKey   string `comment:"不填会随机生成"`
 	Port        int
 	SQLServer   SQLServer
 	RedisServer RedisServer
 	TelegramBot TelegramBot
+	Watcher     Watcher
 }
 
 type SQLServer struct {
@@ -27,14 +30,21 @@ type SQLServer struct {
 
 type RedisServer struct {
 	Address  string
-	Password string
+	Password string `comment:"未设密码可直接不填"`
 	DB       int
 }
 
 type TelegramBot struct {
 	Enable   bool
-	BotToken string
-	NotifyID int64 `comment:"支持user, group, chanel, 以逗号隔开"`
+	BotToken string `comment:"TelegramBot的Token，不需要带前缀bot'"`
+	NotifyID int64  `comment:"支持user, group, chanel, 以逗号隔开"`
+}
+
+type Watcher struct {
+	Enable      bool
+	CPUPercent  float64 `comment:"0-100，支持小数点"`
+	MemPercent  float64 `comment:"0-100，支持小数点"`
+	DiskPercent float64 `comment:"0-100，支持小数点"`
 }
 
 var Config config
@@ -52,8 +62,9 @@ func Read() {
 		log.Fatalf(err.Error())
 	} else {
 		Config = config{
-			Debug: false,
-			Port:  12345,
+			Debug:     false,
+			SecretKey: uuid.NewV4().String(),
+			Port:      12345,
 			SQLServer: SQLServer{
 				IP:       "127.0.0.1",
 				Port:     3306,
@@ -67,6 +78,11 @@ func Read() {
 				Address:  "127.0.0.1:6379",
 				Password: "",
 				DB:       0,
+			},
+			Watcher: Watcher{
+				Enable:     false,
+				CPUPercent: 80,
+				MemPercent: 80,
 			},
 		}
 

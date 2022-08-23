@@ -6,6 +6,7 @@ import (
 	"GoStatusServer/model"
 	"GoStatusServer/utils"
 	"github.com/goccy/go-json"
+	"strconv"
 	"time"
 )
 
@@ -14,8 +15,10 @@ type OnlineStatusWatcher struct {
 }
 
 type clientStatus struct {
-	ClientId string
-	Status   bool // true -> online
+	ClientId     string
+	Status       bool // true -> online
+	HighCPUCount int
+	Count        int
 }
 
 var DefaultOnlineStatusWatcher OnlineStatusWatcher
@@ -49,6 +52,18 @@ func (onlineStatusWatcher *OnlineStatusWatcher) Run() {
 				}
 				onlineStatusWatcher.ClientList[key].Status = nowStatus
 			}
+			if updateRequest.DynamicInformation.CPUAvg > 80 {
+				clientStatus.HighCPUCount++
+			}
+			if clientStatus.HighCPUCount > 60 {
+				utils.SendTelegramNotify(updateRequest.DisplayName + " 近期CPU负载较高!\n 当前CPU占用率为:" + strconv.FormatFloat(updateRequest.DynamicInformation.CPUAvg, 'g', 3, 32))
+			}
+			if clientStatus.Count > 100 {
+				clientStatus.Count = 0
+				clientStatus.HighCPUCount = 0
+			}
+
+			clientStatus.Count++
 		}
 		time.Sleep(time.Second * 2)
 	}

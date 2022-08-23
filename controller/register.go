@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"GoStatusServer/config"
 	"GoStatusServer/model"
+	"GoStatusServer/response"
 	"GoStatusServer/utils"
 	"GoStatusServer/watcher"
 	"github.com/gin-gonic/gin"
@@ -10,6 +12,11 @@ import (
 )
 
 func Register(c *gin.Context) {
+	if c.Query("SecretKey") != config.Config.SecretKey {
+		response.Fail(c, nil, "SecretKey Wrong")
+		return
+	}
+
 	var registerRequest model.RegisterRequest
 	if err := c.BindJSON(&registerRequest); err != nil {
 		return
