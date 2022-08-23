@@ -1,11 +1,16 @@
 package telegram
 
 import (
+	"GoStatusServer/config"
 	"GoStatusServer/utils"
 	tele "gopkg.in/telebot.v3"
 )
 
 func RegisterController() {
+	if !config.Config.TelegramBot.Enable {
+		return
+	}
+
 	utils.TelegramBot.Handle("/ping", func(c tele.Context) error {
 		return c.Send("pong")
 	})

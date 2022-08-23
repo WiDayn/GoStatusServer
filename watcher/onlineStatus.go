@@ -15,10 +15,12 @@ type OnlineStatusWatcher struct {
 }
 
 type clientStatus struct {
-	ClientId     string
-	Status       bool // true -> online
-	HighCPUCount int
-	Count        int
+	ClientId      string
+	Status        bool // true -> online
+	HighCPUCount  int
+	HighMemCount  int
+	HighDiskCount int
+	Count         int
 }
 
 var DefaultOnlineStatusWatcher OnlineStatusWatcher
@@ -52,15 +54,30 @@ func (onlineStatusWatcher *OnlineStatusWatcher) Run() {
 				}
 				onlineStatusWatcher.ClientList[key].Status = nowStatus
 			}
-			if updateRequest.DynamicInformation.CPUAvg > 80 {
+			if updateRequest.DynamicInformation.CPUAvg > config.Config.Watcher.CPUPercent {
 				clientStatus.HighCPUCount++
+			}
+			if updateRequest.DynamicInformation.MemUsedPercent > config.Config.Watcher.MemPercent {
+				clientStatus.HighMemCount++
+			}
+			if updateRequest.DynamicInformation.DiskInformation.Percent > config.Config.Watcher.DiskPercent {
+				clientStatus.HighDiskCount++
 			}
 			if clientStatus.HighCPUCount > 60 {
 				utils.SendTelegramNotify(updateRequest.DisplayName + " 近期CPU负载较高!\n 当前CPU占用率为:" + strconv.FormatFloat(updateRequest.DynamicInformation.CPUAvg, 'g', 3, 32))
 			}
+			if clientStatus.HighMemCount > 60 {
+				utils.SendTelegramNotify(updateRequest.DisplayName + " 近期内存负载较高!\n 当前内存占用率为:" + strconv.FormatFloat(updateRequest.DynamicInformation.MemUsedPercent, 'g', 3, 32))
+			}
+			if clientStatus.HighDiskCount > 60 {
+				utils.SendTelegramNotify(updateRequest.DisplayName + " 近期硬盘占用较高!\n 当前硬盘占用率为:" + strconv.Itoa(int(updateRequest.DynamicInformation.DiskInformation.Percent)))
+			}
+
 			if clientStatus.Count > 100 {
 				clientStatus.Count = 0
 				clientStatus.HighCPUCount = 0
+				clientStatus.HighMemCount = 0
+				clientStatus.HighDiskCount = 0
 			}
 
 			clientStatus.Count++

@@ -9,13 +9,14 @@ import (
 )
 
 type config struct {
-	Debug       bool
-	SecretKey   string `comment:"不填会随机生成"`
-	Port        int
-	SQLServer   SQLServer
-	RedisServer RedisServer
-	TelegramBot TelegramBot
-	Watcher     Watcher
+	Debug          bool
+	SecretKey      string  `comment:"不填会随机生成"`
+	RecordInterval float64 `comment:"记录的间隔(粒度)，单位分钟"`
+	Port           int
+	SQLServer      SQLServer
+	RedisServer    RedisServer
+	TelegramBot    TelegramBot
+	Watcher        Watcher
 }
 
 type SQLServer struct {
@@ -42,9 +43,9 @@ type TelegramBot struct {
 
 type Watcher struct {
 	Enable      bool
-	CPUPercent  float64 `comment:"0-100，支持小数点"`
-	MemPercent  float64 `comment:"0-100，支持小数点"`
-	DiskPercent float64 `comment:"0-100，支持小数点"`
+	CPUPercent  float64 `comment:"0-100，支持小数点， 超过100即为不提醒"`
+	MemPercent  float64 `comment:"0-100，支持小数点， 超过100即为不提醒"`
+	DiskPercent uint64  `comment:"0-100，不支持小数点， 超过100即为不提醒"`
 }
 
 var Config config
@@ -62,9 +63,10 @@ func Read() {
 		log.Fatalf(err.Error())
 	} else {
 		Config = config{
-			Debug:     false,
-			SecretKey: uuid.NewV4().String(),
-			Port:      12345,
+			Debug:          false,
+			SecretKey:      uuid.NewV4().String(),
+			RecordInterval: 5,
+			Port:           12345,
 			SQLServer: SQLServer{
 				IP:       "127.0.0.1",
 				Port:     3306,

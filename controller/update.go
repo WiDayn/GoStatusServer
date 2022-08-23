@@ -59,7 +59,7 @@ func Update(c *gin.Context) {
 			lastTimeClearPing = time.Now()
 		}
 
-		if lastTimeUpdatePing.Before(time.Now().Add(-time.Minute * 5)) {
+		if lastTimeUpdatePing.Before(time.Now().Add(-time.Minute * time.Duration(config.Config.RecordInterval))) {
 			//每五分钟记录一次
 			if result, err := utils.Redisdb.Get(updateRequest.ClientId + "/PingRecords").Result(); err == nil {
 				var pingRecords model.PingRecords
