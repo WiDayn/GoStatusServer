@@ -56,6 +56,7 @@ func Update(c *gin.Context) {
 		if lastTimeClearPing.Before(time.Now().Add(-time.Hour * 24)) {
 			// 清空redis，重新记录
 			utils.Redisdb.Set(updateRequest.ClientId+"/PingRecords", "{}", time.Hour*20480)
+			utils.Redisdb.Set(updateRequest.ClientId+"/BasicRecords", "{}", time.Hour*20480)
 			lastTimeClearPing = time.Now()
 		}
 
