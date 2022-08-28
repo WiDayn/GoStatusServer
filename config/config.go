@@ -82,9 +82,10 @@ func Read() {
 				DB:       0,
 			},
 			Watcher: Watcher{
-				Enable:     false,
-				CPUPercent: 80,
-				MemPercent: 80,
+				Enable:      false,
+				CPUPercent:  80,
+				MemPercent:  80,
+				DiskPercent: 80,
 			},
 		}
 

@@ -36,7 +36,9 @@ func main() {
 	model.ClientInit()
 	utils.InitTelegramBot()
 	telegram.RegisterController()
-	go watcher.DefaultOnlineStatusWatcher.Run()
+	if config.Config.Watcher.Enable {
+		watcher.DefaultOnlineStatusWatcher.Run()
+	}
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 	r.POST("/register", controller.Register)
@@ -45,6 +47,7 @@ func main() {
 	r.GET("/getList", controller.GetList)
 	r.GET("/getBaseInformation", controller.GetBasicInformation)
 	r.GET("/queryDetail", controller.QueryDetail)
+	r.GET("/getNotifyList", controller.GetNotifyList)
 	if err := r.Run(":" + strconv.Itoa(config.Config.Port)); err != nil {
 		logger.Panic("Open HTTP server error", err)
 	}
