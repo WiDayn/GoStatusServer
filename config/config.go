@@ -50,6 +50,9 @@ type Watcher struct {
 
 var Config config
 
+// Read
+// this method will read the config.ini in the same directory and load it into the Config struct
+// you should call this method before you use config.Config, or it will be the default value.
 func Read() {
 	if !isExist("./config.ini") {
 		if _, err := os.Create("./config.ini"); err != nil {

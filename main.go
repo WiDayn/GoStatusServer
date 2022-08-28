@@ -13,6 +13,7 @@ import (
 	"strconv"
 )
 
+// CORSMiddleware allows all origins
 func CORSMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
